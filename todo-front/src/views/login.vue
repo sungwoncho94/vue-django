@@ -1,12 +1,20 @@
 <template>
   <div>
-    <h1>로그인 페이지입니다.</h1>
+    <!-- (3) 컴퍼넌트 사용 -->
+    <Loginform />
   </div>
 </template>
 
 <script>
-export default {
+// (1) 내가 적용하고 싶은 컴퍼넌트 호출
+import Loginform from '@/components/loginform'
 
+export default {
+  name: 'login',
+  components: {
+    // (2) 컴퍼넌트 등록
+    Loginform
+  }
 }
 </script>
 

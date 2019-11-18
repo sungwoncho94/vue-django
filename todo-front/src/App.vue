@@ -6,7 +6,9 @@
       <!-- <router-link to="/about">About</router-link> -->
       <router-link to="/login">Login</router-link>
     </div>
-    <router-view/>
+    <div class="container col-6">
+      <router-view/>
+    </div>
   </div>
 </template>
 
