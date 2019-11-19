@@ -7,11 +7,12 @@
         <!-- 로그아웃 버튼 만들기 -->
         <!-- 로그아웃은 별도의 페이지가 필요 없이 그냥 기능이기 때문에 a태그 써도 된다 -->
         <!-- @click.prevent -> logout 페이지로 이동하는 것이 아니라, logout기능만 실현 (href로 redirect방지 위해) -->
-        <a @click.prevent="logout" href="/logout">Logout</a>
+        <a @click.prevent="logout" href="/logout">Logout</a>  |  
+        <!-- router link : router의 index.js를 참조해서 어떤 페이지를 보여줄지 가르킴 -->
+        <router-link to="/">Home</router-link>
       </div>
       <div v-else>
-        <!-- router link : router의 index.js를 참조해서 어떤 페이지를 보여줄지 가르킴 -->
-        <router-link to="/">Home</router-link>  |  
+        
         <!-- <router-link to="/about">About</router-link> -->
         <router-link to="/login">Login</router-link>  |
       </div>
