@@ -94,7 +94,7 @@ MIDDLEWARE = [
 # ]
 
 # 오픈api를 사용해서 데이터를 가져올 때, 전세계 모든 곳에서 접근 가능
-CONS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'todoback.urls'
 

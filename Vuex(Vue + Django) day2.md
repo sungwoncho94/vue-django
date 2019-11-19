@@ -86,7 +86,7 @@ XHR = 페이지 변경 없이 데이터 요청을 보내고 받는 것
   # ]
   
   # 오픈api를 사용해서 데이터를 가져올 때, 전세계 모든 곳에서 접근 가능
-  CONS_ORIGIN_ALLOW_ALL = True
+  CORS_ORIGIN_ALLOW_ALL = True
   
   ```
 
@@ -156,3 +156,259 @@ username / password 입력 후 POST요청 보내면 token이 온다 (get 요청�
 우리의 시크릿키 (settings.py)를 입력하면 Signature Verified 가 된다 -> 인증 받음
 
 ![1574129236042](../../AppData/Roaming/Typora/typora-user-images/1574129236042.png)
+
+---------------
+
+- vue-페이지에서 post로 로그인 요청을 보내서 token을 받아보자(?)
+  todo-front / loginform.vue
+  내가 토큰값을 가지고 있으면 로그인 한 상태임!!
+
+  ```javascript
+    methods: {
+      login() {
+        if(this.checkForm()) {
+          this.loading = true
+          // http://127.0.0.1:8000
+          const SERVER_IP = process.env.VUE_APP_SERVER_IP
+  
+          // post로만 요청을 보내야 한다
+          axios.post(SERVER_IP + '/api-token-auth/', this.credentials)
+            .then(response => {
+              console.log(response)
+              this.loading = false
+            })
+            .catch(error => {
+              console.error(error)
+              this.loading = false
+            })
+          console.log('Login Button Clicked!')
+        }
+      },
+  ```
+
+  - 로그인하면 토큰값이 생김
+
+  ![1574130457689](../../AppData/Roaming/Typora/typora-user-images/1574130457689.png)
+
+------------------
+
+- 저장소에 저장하고 불러오는 `vue-session` install 하기
+
+  todo-fornt/ main.js
+
+  `$ npm i vue-session`
+
+  ```javascript
+  // session storage 사용하기 위해 vue-session 임포트해주고, 밑에 사용한다고 알려주기
+  import Vuesession from 'vue-session',
+  
+  Vue.use(VueSession)
+  ```
+
+  todo-front / loginform.vue
+
+  ```vue
+  <script>
+  import axios from 'axios'
+  // 사용자가 로그인한 후 홈으로 보내주기 위해 라우터 가져옴
+  import router from '@/router'
+  
+      ...
+      
+    methods: {
+      login() {
+        if(this.checkForm()) {
+          this.loading = true
+          // http://127.0.0.1:8000
+          const SERVER_IP = process.env.VUE_APP_SERVER_IP
+  
+          // post로만 요청을 보내야 한다
+          axios.post(SERVER_IP+'/api-token-auth/', this.credentials)
+            .then(response => {
+  
+              // 세션을 초기화, 사용하겠다
+              this.$session.start()
+  
+              // 응답결과를 세션에 저장하겠다.  (this.$session.set(key, token)값 필요)
+              this.$session.set('jwt', response.data.token)
+  
+              // console.log(response)
+              this.loading = false
+  
+              // vue rouwter를 통해 홈으로 이동
+              router.push('/')
+            })
+  ```
+
+  웹 -> 콘솔창 -> 어플리케이션 -> 세션스토리지에 `vue-session-key` 등록되었는지 확인
+  ![1574135225665](../../AppData/Roaming/Typora/typora-user-images/1574135225665.png)
+
+----------
+
+- 홈에서 로그인되어있지 않으면, 로그인 페이지로 보내주기
+  todo-front / home.vue
+
+  ```vue
+  <template>
+    <div class="home">
+  
+  
+    </div>
+  </template>
+  
+  <script>
+  import router from '@/router'
+  
+  export default {
+    name: 'home',
+  
+    methods: {
+      // 로그인 되어있는지 확인하는 함수
+      checkLoggedIn() {
+        // 1. 세션을 시작해서
+        this.$session.start()
+  
+        // 2. jwt가 있는지 확인하겠다.
+        // jwt가 없다면 -> 로그인 페이지로 보내주겠다.
+        if(!this.$session.has('jwt')) {
+          router.push('/login')
+        }
+      }
+    },
+    // vue가 화면에 그려지면 실행하는 함수
+    mounted() {
+  
+    }
+  }
+  </script>
+  
+  <style>
+  
+  </style>
+  ```
+
+- logout = 세션을 지우면 된다
+
+  ```vue
+  <!-- todo-front / App.vue -->
+  <template>
+    <div id="app">
+      <div id="nav">
+        <!-- router link : router의 index.js를 참조해서 어떤 페이지를 보여줄지 가르킴 -->
+        <router-link to="/">Home</router-link>  |  
+        <!-- <router-link to="/about">About</router-link> -->
+        <router-link to="/login">Login</router-link>  |
+        <!-- 로그아웃 버튼 만들기 -->
+        <!-- 로그아웃은 별도의 페이지가 필요 없이 그냥 기능이기 때문에 a태그 써도 된다 -->
+        <!-- @click.prevent -> logout 페이지로 이동하는 것이 아니라, logout기능만 실현 (href로 redirect방지 위해) -->
+        <a @click.prevent="logout" href="/logout">Logout</a>
+      </div>
+      <div class="container col-6">
+        <router-view/>
+      </div>
+    </div>
+  </template>
+  
+  <script>
+  import router from '@/router'
+  
+  export default {
+    name: 'App',
+    methods: {
+      logout() {
+        // 세션에 세션아이디밖에 없기 때문에 세션 자체를 다 날리면 된다
+        this.$session.destroy()
+        // 로그아웃한 후, 로그인 페이지로 보내준다
+        router.push('/login')
+      }
+    }
+  }
+  </script>>
+  
+  <style>
+  #app {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+  }
+  
+  #nav {
+    padding: 30px;
+  }
+  
+  #nav a {
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  
+  #nav a.router-link-exact-active {
+    color: #42b983;
+  }
+  </style>
+  
+  ```
+
+  로그아웃 눌렀을 때, 세션 키 모두 사라지는지 확인하기!
+
+  
+
+- 조건부랜더링 (로그인 시 -> 홈, 로그아웃 보이기) / (비로그인시 -> 로그인만 보이기)
+
+  ```vue
+  <template>
+    <div id="app">
+      <div id="nav">
+  
+        <!-- 조건부랜더링 -->
+        <div v-if="isLoggedIn">
+          <!-- 로그아웃 버튼 만들기 -->
+          <!-- 로그아웃은 별도의 페이지가 필요 없이 그냥 기능이기 때문에 a태그 써도 된다 -->
+          <!-- @click.prevent -> logout 페이지로 이동하는 것이 아니라, logout기능만 실현 (href로 redirect방지 위해) -->
+          <a @click.prevent="logout" href="/logout">Logout</a>
+        </div>
+        <div v-else>
+          <!-- router link : router의 index.js를 참조해서 어떤 페이지를 보여줄지 가르킴 -->
+          <router-link to="/">Home</router-link>  |  
+          <!-- <router-link to="/about">About</router-link> -->
+          <router-link to="/login">Login</router-link>  |
+        </div>
+        
+      </div>
+      <div class="container col-6">
+        <router-view/>
+      </div>
+    </div>
+  </template>
+  ```
+
+  ```javascript
+  <script>
+  import router from '@/router'
+  
+  export default {
+    name: 'App',
+    data() {
+        return {
+          // 사용자의 로그인 상태 값, jwt가 있으면 true -> 로그인 해있음
+          isLoggedIn: this.$session.has('jwt')
+        }
+    },
+    methods: {
+      logout() {
+        // 세션에 세션아이디밖에 없기 때문에 세션 자체를 다 날리면 된다
+        this.$session.destroy()
+        // 로그아웃한 후, 로그인 페이지로 보내준다
+        router.push('/login')
+      }
+    },
+    // 데이터의 변화가 일어나는 시점에 실행하는 함수
+    updated() {
+      this.isLoggedIn = this.$session.has('jwt')
+    }
+  }
+  </script>>
+  ```
+
+  

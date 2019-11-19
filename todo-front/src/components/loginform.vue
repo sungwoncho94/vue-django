@@ -35,6 +35,8 @@
 
 <script>
 import axios from 'axios'
+// 사용자가 로그인한 후 홈으로 보내주기 위해 라우터 가져옴
+import router from '@/router'
 
 export default {
   name: 'Loginform',
@@ -54,12 +56,24 @@ export default {
     login() {
       if(this.checkForm()) {
         this.loading = true
+        // http://127.0.0.1:8000
         const SERVER_IP = process.env.VUE_APP_SERVER_IP
 
-        axios.get(SERVER_IP, this.credentials)
+        // post로만 요청을 보내야 한다
+        axios.post(SERVER_IP+'/api-token-auth/', this.credentials)
           .then(response => {
-            console.log(response)
+
+            // 세션을 초기화, 사용하겠다
+            this.$session.start()
+
+            // 응답결과를 세션에 저장하겠다.  (this.$session.set(key, token)값 필요)
+            this.$session.set('jwt', response.data.token)
+
+            // console.log(response)
             this.loading = false
+
+            // vue rouwter를 통해 홈으로 이동
+            router.push('/')
           })
           .catch(error => {
             console.error(error)
