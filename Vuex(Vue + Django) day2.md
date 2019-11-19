@@ -412,3 +412,169 @@ username / password 입력 후 POST요청 보내면 token이 온다 (get 요청�
   ```
 
   
+
+------------------------
+
+- todo-back / serializer.py 만들기
+
+  ```python
+  from rest_framework import serializers
+  from .models import Todo
+  
+  # 사용자에게 이 정보를 담은 todo를 보내줄 것
+  class TodoSerializer(serializers.ModelSerializer):
+      class Meta:
+          model = Todofields = ('id', 'user', 'title', 'completed',)
+  ```
+
+- todo-back / urls.py
+
+  ```python
+  from django.contrib import admin
+  from django.urls import path, include
+  from rest_framework_jwt.views import obtain_jwt_token
+  
+  urlpatterns = [
+      path('admin/', admin.site.urls),
+      path('api-token-auth/', obtain_jwt_token),
+      path('api/v1/', include('todos.urls')),
+  ]
+  ```
+
+- todos / urls.py 만들기
+
+  ```python
+  from django.urls import path
+  from . import views
+  
+  urlpatterns = [
+      path('todos/', views.todo_create),
+  ]
+  ```
+
+- todos / views.py
+
+  ```python
+  from django.shortcuts import render
+  from .serializers import TodoSerializer
+  # 특정 methods의 요청만 허용하겠다를 정해줌
+  from rest_framework.decorators import api_view
+  from rest_framework.response import Response
+  
+  
+  @api_view(['POST'])  # 특정 메소드의 요청만 허용
+  def todo_create(request):
+      # request.data 는 axios의 body로 전달한 데이터임
+      serializer = TodoSerializer(data=request.data)
+      if serializer.is_valid():
+          serializer.save()
+          # 사용자가 새롭게 작성한 데이터를 응답해준다
+          return Response(serializer.data)
+  ```
+
+  
+
+--------------
+
+- 수정 & 삭제 methods 만들기
+  (1) todos / urls.py
+
+  ```python
+  from django.urls import path
+  from . import views
+  
+  urlpatterns = [
+      path('todos/', views.todo_create),
+      path('todos/<int:todo_id>/', views.todo_update_delete),
+  ]
+  ```
+
+  (2) todos / views.py
+
+  ```python
+  from django.shortcuts import render, get_object_or_404
+  from .serializers import TodoSerializer
+  from .models import Todo
+  # 특정 methods의 요청만 허용하겠다를 정해줌
+  from rest_framework.decorators import api_view
+  from rest_framework.response import Response
+  
+  
+  @api_view(['POST'])  # 특정 메소드의 요청만 허용
+  def todo_create(request):
+      # request.data 는 axios의 body로 전달한 데이터임
+      serializer = TodoSerializer(data=request.data)
+      if serializer.is_valid():
+          serializer.save()
+          # 사용자가 새롭게 작성한 데이터를 응답해준다
+          return Response(serializer.data)
+  
+  
+  @api_view(['PUT', 'DELETE'])
+  def todo_update_delete(request, todo_id):
+      # 수정하거나 삭제할 todo instance 호출
+      todo = get_object_or_404(Todo, pk=todo_id)
+      if request.method == "PUT":
+          # todo를 수정할건데, data로 수정할거에요! 라는 뜻
+          # instance todo를 request.data로 넘어온 값으로 수정할 것
+          serializer = TodoSerializer(instance=todo, data=request.data)
+          if serializer.is_valid(raise_exception=True):
+              serializer.save()
+              return Response(serializer.data)
+      if request.method == "DELETE":
+          todo.delete()
+          # 204 : 삭제했다는 코드  ->  요청에 성공했찌만 컨텐츠는 없다는걸 알려주는 status code
+          return Response(status=204)
+  
+  ```
+
+  
+
+---------------------
+
+- user detail 보여주는 methods 만들기
+  todos / serializers.py
+
+  ```python
+  from rest_framework import serializers
+  from django.contrib.auth import get_user_model
+  from .models import Todo
+  
+  class UserDetailSerializer(serializers.ModelSerializer):
+      todo_set = TodoSerializer(many=True)
+      class Meta:
+          model = User
+          fields = ('id', 'username', 'todo_set',)
+  ```
+
+  todos / urls.py
+
+  ```python
+  from django.urls import path
+  from . import views
+  
+  urlpatterns = [
+      path('todos/', views.todo_create),
+      path('todos/<int:todo_id>/', views.todo_update_delete),
+      path('users/<int:user_id>/', views.user_detail),
+  ]
+  ```
+
+  todos / views.py
+
+  ```python
+  from django.shortcuts import render, get_object_or_404
+  from django.contrib.auth import get_user_model
+  from .serializers import TodoSerializer, UserDetailSerializer
+  
+  User = get_user_model()
+  
+  @api_view(['GET'])
+  def user_detail(request, user_id):
+      user = get_object_or_404(User, pk=user_id)
+      serializer = UserDetailSerializer(instance=user)
+      return Response(serializer.data)
+  
+  ```
+
+  
