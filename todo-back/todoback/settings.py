@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 # https://jpadilla.github.io/django-rest-framework-jwt/#usage
+# view함수로 들어가기 전 인증 여부를 확인해주는 세팅
 REST_FRAMEWORK = {
     # 로그인 여부를 확인해주는 클래스
     'DEFAULT_PERMISSION_CLASSES': (
@@ -150,7 +151,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ko-kr'
 
 TIME_ZONE = 'UTC'
 
