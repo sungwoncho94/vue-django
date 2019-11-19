@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +32,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # local apps
+    'todos',
+
+    # Third party apps
+    'rest_framework',
+    'corsheaders',
+
+    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,7 +48,37 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
+# https://jpadilla.github.io/django-rest-framework-jwt/#usage
+REST_FRAMEWORK = {
+    # 로그인 여부를 확인해주는 클래스
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    # 인증 여부를 확인하는 클래스
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+# https://jpadilla.github.io/django-rest-framework-jwt/#additional-settings
+JWT_AUTH = {
+    # 필수!! => secret_key (settings.py 위쪽에 있음)
+    # Token을 서명할 시크릿 키를 등록 (절대 외부 노출 금지)  but, 어차피 default가 settings.py에 있는 secret key이기 때문에 꼭 안해줘도됨
+    'JWT_SECRET_KEY': SECRET_KEY,
+    # Token을 어떻게 hashing할 것인지 적어놓는 것.
+    'JWT_ALGORITHM': 'HS256',
+    # Token 새로고침 허용
+    'JWT_ALLOW_REFRESH': True,
+    # 유효기간 / datetime import해야함  /  default는 5분이지만, 개발할 때에는 7주일정도로 설정
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
+    # 28일 마다 토큰이 갱신 (유효기간 연장시)
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=28),
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -48,6 +87,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# vue server 등록 / 우리 서버에서만 접근 가능
+# CORS_ORIGIN_WHITELIST = [
+#     "http://localhost:8080",
+# ]
+
+# 오픈api를 사용해서 데이터를 가져올 때, 전세계 모든 곳에서 접근 가능
+CONS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'todoback.urls'
 
@@ -118,3 +165,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# custom한 유저모델 사용할거라고 등록
+AUTH_USER_MODEL = 'todos.User'
